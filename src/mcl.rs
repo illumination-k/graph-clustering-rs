@@ -17,6 +17,39 @@ where
     fn inflate(&self, power: i32) -> Result<Array2<A>>;
     fn prune(&self, threshold: A) -> Result<Array2<A>>;
     fn add_self_loop(&mut self, loop_value: A) -> Result<()>;
+
+    /// mcl clustering from ndarray::Array2
+    ///
+    /// ```
+    /// # #[macro_use] extern crate ndarray;
+    /// # #[macro_use] extern crate approx;
+    /// use markov_clustering_rs::mcl::*;
+    /// use ndarray::Array2;
+    ///
+    /// let expantion = 2;
+    /// let inflation = 2;
+    /// let loop_value = 1.;
+    /// let iterations = 100;
+    /// let pruning_threshold = 0.1;
+    /// let pruning_frequency = 1;
+    /// let convergence_check_frequency = 1;
+    /// let input: Array2<f64> = array![[1., 1., 1., 0., 0., 0., 0.],
+    ///                                 [1., 1., 1., 0., 0., 0., 0.],
+    ///                                 [1., 1., 1., 1., 0., 0., 0.],
+    ///                                 [0., 0., 1., 1., 1., 0., 1.],
+    ///                                 [0., 0., 0., 1., 1., 1., 1.],
+    ///                                 [0., 0., 0., 0., 1., 1., 1.],
+    ///                                 [0., 0., 0., 1., 1., 1., 1.]];
+    /// let output: Array2<f64> = array![[0., 0., 0., 0., 0., 0., 0.],
+    ///                                 [0., 0., 0., 0., 0., 0., 0.],
+    ///                                 [1., 1., 1., 0., 0., 0., 0.],
+    ///                                 [0., 0., 0., 0., 0., 0., 0.],
+    ///                                 [0., 0., 0., 0.5, 0.5, 0.5, 0.5],
+    ///                                 [0., 0., 0., 0., 0., 0., 0.],
+    ///                                 [0., 0., 0., 0.5, 0.5, 0.5, 0.5]];
+    /// assert_abs_diff_eq!(input.mcl(expantion, inflation, loop_value, iterations, pruning_threshold, pruning_frequency, convergence_check_frequency).unwrap(), output)
+    /// ```
+    ///
     fn mcl(&self,
         expansion: i32,
         inflation: i32,
