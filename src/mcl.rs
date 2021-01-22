@@ -7,6 +7,7 @@ use ndarray_stats::*;
 use approx::{AbsDiffEq};
 
 use num_traits::{Float, zero, one};
+
 pub trait MclExt<A>
 where 
     A: Float,
