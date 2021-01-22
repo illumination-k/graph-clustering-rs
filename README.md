@@ -15,7 +15,7 @@ let expantion = 2;
 let inflation = 2;
 let loop_value = 1.;
 let iterations = 100;
-let pruning_threshold = 0.1;
+let pruning_threshold = 0.0001;
 let pruning_frequency = 1;
 let convergence_check_frequency = 1;
 

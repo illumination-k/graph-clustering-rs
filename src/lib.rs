@@ -1,7 +1,5 @@
 extern crate anyhow;
 
-extern crate ndarray_stats;
-
 #[cfg_attr(test, macro_use)]
 extern crate ndarray;
 

@@ -1,12 +1,40 @@
 use std::iter::Sum;
 use anyhow::Result;
 
-use ndarray::{Array2, Axis};
-use ndarray_stats::*;
+use ndarray::{Array2, ArrayBase, Axis, Data, Dimension};
 
 use approx::{AbsDiffEq};
 
 use num_traits::{Float, zero, one};
+
+pub trait PartiqlArgMaxExt<A, S, D>
+where
+    S: Data<Elem = A>,
+    D: Dimension,
+    A: PartialOrd
+{
+    fn argmax(&self) -> Result<D::Pattern>;
+}
+
+impl<A, S, D> PartiqlArgMaxExt<A, S, D> for ArrayBase<S, D>
+where
+    S: Data<Elem = A>,
+    D: Dimension,
+    A: PartialOrd
+{
+    fn argmax(&self) -> Result<D::Pattern> {
+        let mut current_max = self.first().unwrap();
+        let mut current_pattern_max = D::zeros(self.ndim()).into_pattern();
+        
+        for (pattern, elem) in self.indexed_iter() {
+            if elem.partial_cmp(current_max).unwrap() == std::cmp::Ordering::Greater {
+                current_pattern_max = pattern;
+                current_max = elem;
+            }
+        }
+        Ok(current_pattern_max)
+    }
+}
 
 pub trait MclExt<A>
 where 
@@ -91,7 +119,7 @@ where
     /// let inflation = 2;
     /// let loop_value = 1.;
     /// let iterations = 100;
-    /// let pruning_threshold = 0.1;
+    /// let pruning_threshold = 0.0001;
     /// let pruning_frequency = 1;
     /// let convergence_check_frequency = 1;
     /// let input: Array2<f64> = array![[1., 1., 1., 0., 0., 0., 0.],

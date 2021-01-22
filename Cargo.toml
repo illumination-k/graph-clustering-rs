@@ -9,8 +9,7 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0"
 ndarray = { version = "0.14.0", features = ["approx"] }
-ndarray-stats = "0.4"
 num-traits = "0.2"
-approx = "*"
+approx = "0.4"
 
 [dev-dependencies]
