@@ -11,11 +11,72 @@ use num_traits::{Float, zero, one};
 pub trait MclExt<A>
 where 
     A: Float,
-{
+{   
+    /// Normalize the columns of the given matrix by L1 normalization
+    ///
+    /// ```
+    /// # #[macro_use] extern crate ndarray;
+    /// # #[macro_use] extern crate approx;
+    /// use markov_clustering_rs::mcl::*;
+    /// use ndarray::Array2;
+    /// let input: Array2<f64> = array![[1., 1., 0.],
+    ///                                 [0., 1., 1.],
+    ///                                 [0., 0., 1.]];
+    /// let output: Array2<f64> = array![[1., 0.5, 0.],
+    ///                                 [0., 0.5, 0.5],
+    ///                                 [0., 0., 0.5]];
+    /// assert_abs_diff_eq!(input.normalize().unwrap(), output)
+    /// ```
     fn normalize(&self) -> Result<Array2<A>>;
+
+    /// Apply cluster expansion to the given matrix with given power
+    ///
+    /// ```
+    /// # #[macro_use] extern crate ndarray;
+    /// # #[macro_use] extern crate approx;
+    /// use markov_clustering_rs::mcl::*;
+    /// use ndarray::Array2;
+    /// let input = array![[1., 0.5, 0.],
+    ///                 [0., 0.5, 0.5],
+    ///                 [0., 0., 0.5]];
+    /// let output = array![[1., 0.75, 0.25],
+    ///                 [0., 0.25, 0.5 ],
+    ///                 [0., 0., 0.25]];
+    /// assert_abs_diff_eq!(input.expand(2).unwrap(), output) 
+    /// ```
     fn expand(&self, power: i32) -> Result<Array2<A>>;
+
+    ///  Apply cluster inflation to the given matrix with given power
+    /// 
+    /// ```
+    /// # #[macro_use] extern crate ndarray;
+    /// # #[macro_use] extern crate approx;
+    /// use markov_clustering_rs::mcl::*;
+    /// use ndarray::Array2;
+    /// let input: Array2<f64> = array![[0.5, 0.5],
+    ///                                 [1.,   1.]];
+    /// let output: Array2<f64> = array![[0.2, 0.2],
+    ///                                  [0.8, 0.8]];
+    /// assert_abs_diff_eq!(input.inflate(2).unwrap(), output)
+    /// ```
     fn inflate(&self, power: i32) -> Result<Array2<A>>;
+
+    /// prune the matrix below threshold
+    /// The maximum value in each col is not pruned
+    ///
+    /// ```
+    /// # #[macro_use] extern crate ndarray;
+    /// # #[macro_use] extern crate approx;
+    /// use markov_clustering_rs::mcl::*;
+    /// use ndarray::Array2;
+    /// let threshold = 2.5;
+    /// let input: Array2<f64> = array![[1., 2., 3.], [3., 1., 4.]];
+    /// let output: Array2<f64> = array![[0., 2., 3.,], [3., 0., 4.]];
+    /// assert_abs_diff_eq!(input.prune(threshold).unwrap(), output)
+    /// ``` 
     fn prune(&self, threshold: A) -> Result<Array2<A>>;
+
+    /// Add self loop to the matrix
     fn add_self_loop(&mut self, loop_value: A) -> Result<()>;
 
     /// mcl clustering from ndarray::Array2
@@ -26,7 +87,7 @@ where
     /// use markov_clustering_rs::mcl::*;
     /// use ndarray::Array2;
     ///
-    /// let expantion = 2;
+    /// let expansion = 2;
     /// let inflation = 2;
     /// let loop_value = 1.;
     /// let iterations = 100;
@@ -47,7 +108,7 @@ where
     ///                                 [0., 0., 0., 0.5, 0.5, 0.5, 0.5],
     ///                                 [0., 0., 0., 0., 0., 0., 0.],
     ///                                 [0., 0., 0., 0.5, 0.5, 0.5, 0.5]];
-    /// assert_abs_diff_eq!(input.mcl(expantion, inflation, loop_value, iterations, pruning_threshold, pruning_frequency, convergence_check_frequency).unwrap(), output)
+    /// assert_abs_diff_eq!(input.mcl(expansion, inflation, loop_value, iterations, pruning_threshold, pruning_frequency, convergence_check_frequency).unwrap(), output)
     /// ```
     ///
     fn mcl(&self,
