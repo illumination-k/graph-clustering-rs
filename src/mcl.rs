@@ -1,113 +1,166 @@
+use std::iter::Sum;
 use anyhow::Result;
+
 use ndarray::{Array2, Axis};
-use ndarray_linalg::*;
 use ndarray_stats::*;
 
-/// normalize matrix by L1 normalization method
-fn normalize(matrix: &Array2<f64>) -> Result<Array2<f64>> {
-    let mut new_matrix = matrix.clone();
+use approx::{AbsDiffEq};
 
-    for (i, row) in matrix.axis_iter(Axis(1)).enumerate() {
-        let norms = row.norm_l1();
-        // TODO! row / norms
-
-    }
-    Ok(new_matrix)
+use num_traits::{Float, zero, one};
+pub trait MclExt<A>
+where 
+    A: Float,
+{
+    fn normalize(&self) -> Result<Array2<A>>;
+    fn expand(&self, power: i32) -> Result<Array2<A>>;
+    fn inflate(&self, power: i32) -> Result<Array2<A>>;
+    fn prune(&self, threshold: A) -> Result<Array2<A>>;
+    fn add_self_loop(&mut self, loop_value: A) -> Result<()>;
+    fn mcl(&self,
+        expansion: i32,
+        inflation: i32,
+        loop_value: A,
+        iterations: usize,
+        pruning_threshold: A,
+        pruning_frequency: usize,
+        convergence_check_frequency: usize,
+    ) -> Result<Array2<A>>;
 }
 
-fn inflate(matrix: &Array2<f64>, power: i32) -> Result<Array2<f64>> {
-    let norm_mat = normalize(matrix)?;
-    let inflate_mat = norm_mat.mapv(|f| f.powi(power));
-    Ok(inflate_mat)
-}
-
-fn expand(matrix: &Array2<f64>, power: i32) -> Result<Array2<f64>> {
-    let mut new_mat = matrix.clone();
-
-    for _ in 0..power-1 {
-        new_mat = new_mat.dot(matrix)
-    }
-
-    Ok(new_mat)
-}
- 
-fn add_self_loop(matrix: &Array2<f64>, loop_value: f64) -> Result<Array2<f64>> {
-    let shape = matrix.shape();
-    assert_eq!(shape[0], shape[1]);
-    let mut new_matrix = matrix.clone();
-    for i in 0..shape[0] {
-        new_matrix[(i, i)] = loop_value;
-    }
-    Ok(new_matrix)
-}
-
-fn prune(matrix: &Array2<f64>, threshold: f64) -> Result<Array2<f64>> {
-    let mut pruned = matrix.clone().mapv(|x| { if x < threshold { 0. } else { x }});
-
-    for (i, row) in matrix.axis_iter(Axis(1)).enumerate() {
-        let c: usize = row.argmax()?;
-
-        pruned[(c, i)] = matrix[(c, i)];
-    }
-
-    Ok(pruned)
-}
-
-fn iterate(matrix: &Array2<f64>, expansion: i32, inflation: i32) -> Result<Array2<f64>>{
-    inflate(
-        &expand(matrix, expansion)?,
-        inflation
-    )
-}
-
-pub fn mcl(
-    matrix: Array2<f64>,
-    expansion: i32,
-    inflation: i32,
-    loop_value: f64,
-    iterations: usize,
-    pruning_threshold: f64,
-    pruning_frequency: usize,
-    convergence_check_frequency: usize
-) -> Result<Array2<f64>> {
-    let mut new_mat = matrix.clone();
-
-    if loop_value > 0. {
-        new_mat = add_self_loop(&new_mat, loop_value)?;
-    }
-
-    new_mat = normalize(&new_mat)?;
-
-    for i in 0..iterations {
-        let last_mat = new_mat.clone();
-
-        new_mat = iterate(&new_mat, expansion, inflation)?;
-
-        if i % pruning_frequency == pruning_frequency - 1 {
-            new_mat = prune(&new_mat, pruning_threshold)?;
-        }
-
-        if i % convergence_check_frequency % i == convergence_check_frequency - 1 {
-            // TODO!
-            // check abs_diff_eq(last_mat, new_mat)
-            // break;
-        }
-    }
-
-    Ok(new_mat)
+fn _handle_zeros_in_scale<A: Float>(scale: A) -> A {
+    if scale == zero() { one() } else { scale }
 } 
+
+impl<A> MclExt<A> for Array2<A>
+where
+    A: 'static + Float + Sum + AbsDiffEq,
+{
+    fn normalize(&self) -> Result<Array2<A>> {
+        let mut vec: Vec<A> = Vec::new();
+
+        for row in self.t().axis_iter(Axis(0)) {
+            let norm_l1: A = _handle_zeros_in_scale(row.iter().map(|x| x.abs()).sum());
+
+            for &x in row.iter() {
+                vec.push( x / norm_l1)
+            } 
+        }
+
+        let shape = (self.shape()[1], self.shape()[0]);
+        let mat: Array2<A> = Array2::from_shape_vec(shape, vec)?.reversed_axes();
+        Ok(mat)
+    }
+
+    fn expand(&self, power: i32) -> Result<Array2<A>> {
+        let mut mat: Array2<A> = self.to_owned();
+
+        for _ in 0..power-1 {
+            mat = mat.dot(self)
+        }
+
+        Ok(mat)
+    }
+
+    fn inflate(&self, power: i32) -> Result<Array2<A>> {
+        self.mapv(|x| x.powi(power)).normalize()
+    }
+
+    fn add_self_loop(&mut self, loop_value: A) -> Result<()> {
+        let shape = self.shape();
+        assert_eq!(shape[0], shape[1]);
+
+        for i in 0..shape[0] {
+            self[(i, i)] = loop_value;
+        }
+
+        Ok(())
+    }
+
+    fn prune(&self, threshold: A) -> Result<Array2<A>> {
+        let mat: Array2<A> = self.to_owned();
+        let mut pruned = mat.mapv(|x| if x < threshold { zero() } else {x});
+
+        for (i, row) in mat.axis_iter(Axis(1)).enumerate() {
+            let c = row.argmax()?;
+            pruned[(c, i)] = self[(c, i)];
+        }
+        
+        Ok(pruned)
+    }
+
+    fn mcl(&self, expansion: i32, inflation: i32, loop_value: A, iterations: usize, pruning_threshold: A, pruning_frequency: usize, convergence_check_frequency: usize) -> Result<Array2<A>> {
+        let mut mat: Array2<A> = self.to_owned();
+
+        if loop_value > zero() {
+            mat.add_self_loop(loop_value)?
+        }
+
+        mat = mat.normalize()?;
+
+        for i in 0..iterations {
+            let last_mat = mat.clone();
+
+            mat = mat.expand(expansion)?.inflate(inflation)?;
+            
+            if i % pruning_frequency == pruning_frequency - 1 {
+                mat = mat.prune(pruning_threshold)?;
+            }
+
+            if i % convergence_check_frequency == convergence_check_frequency - 1 {
+                
+                #[allow(deprecated)]
+                if mat.all_close(&last_mat, A::from(1e-8).unwrap()) {
+                    break;
+                }
+            }
+        }
+        
+        Ok(mat)
+    }
+}
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use approx::AbsDiffEq;
+    use approx::{AbsDiffEq, assert_abs_diff_eq};
 
     #[test]
     fn test_normalize_1() {
-        let matrix = array![[-0.02630925,  0.34560928], [ 0.49153899,  0.37912572]];
-        let normed_matrix = array![[-0.05080494,  0.47687676], [ 0.94919506,  0.52312324]];
-        dbg!(normalize(&matrix).unwrap());
-        assert!(normalize(&matrix).unwrap().abs_diff_eq(&normed_matrix, 1e-8))
+        let matrix: Array2<f64> = array![[-0.02630925,  0.34560928], [ 0.49153899,  0.37912572]];
+        let normed_matrix: Array2<f64> = array![[-0.05080494,  0.47687676], [ 0.94919506,  0.52312324]];
+        // dbg!(&matrix.normalize().unwrap());
+        assert!(matrix.normalize().unwrap().abs_diff_eq(&normed_matrix, 1e-8))
+    }
+
+    #[test]
+    fn test_normalize_2() {
+        let matrix: Array2<f64> = array![[-1.1990861 ,  0.21545948,  1.62300919, -0.04798489],
+                                            [-0.197236  ,  0.27418912, -2.31481452, -0.67681584],
+                                            [-1.00124304, -0.63797063,  0.01981998, -0.43391746]];
+        let normed_matrix: Array2<f64> = array![[-0.5001266 ,  0.19107467,  0.41009482, -0.04141204],
+                        [-0.08226513,  0.24315755, -0.58489715, -0.58410738],
+                        [-0.41760827, -0.56576778,  0.00500802, -0.37448058]];
+        // dbg!(&matrix.normalize());
+        assert!(matrix.normalize().unwrap().abs_diff_eq(&normed_matrix, 1e-8))
+    }
+
+    #[test]
+    fn test_normalize_3() {
+        let input: Array2<f64> = array![[1., 1., 0.],
+                                        [0., 1., 1.],
+                                        [0., 0., 1.]];
+        let output: Array2<f64> = array![[1., 0.5, 0.],
+                                        [0., 0.5, 0.5],
+                                        [0., 0., 0.5]];
+        assert_abs_diff_eq!(input.normalize().unwrap(), output)
+    }
+
+    #[test]
+    fn test_normalize_4() {
+        let input = array![[0., 0.], [0., 0.]];
+        let output = array![[0., 0.], [0., 0.]];
+
+        assert_abs_diff_eq!(input.normalize().unwrap(), output)
     }
 
     #[test]
@@ -115,7 +168,49 @@ mod test {
         let threshold = 2.5;
         let matrix = array![[1., 2., 3.], [3., 1., 4.]];
         let pruned_mat = array![[0., 2., 3.,], [3., 0., 4.]];
+        // dbg!(&matrix.prune(threshold).unwrap());
+        assert!(matrix.prune(threshold).unwrap().abs_diff_eq(&pruned_mat, 1e-8))
+    }
 
-        assert!(prune(&matrix, threshold).unwrap().abs_diff_eq(&pruned_mat, 1e-8))
+    #[test]
+    fn test_expand() {
+
+        let input = array![[1., 0.5, 0.],
+                                        [0., 0.5, 0.5],
+                                        [0., 0., 0.5]];
+        let output = array![[1., 0.75, 0.25],
+                                                                [0., 0.25, 0.5 ],
+                                                                [0., 0., 0.25]];
+        assert_abs_diff_eq!(input.expand(2).unwrap(), output)    
+    }
+
+    #[test]
+    fn test_inflate() {
+        let input: Array2<f64> = array![[0.5, 0.5],
+                                        [1.,   1.]];
+        let output: Array2<f64> = array![[0.2, 0.2],
+                                        [0.8, 0.8]];
+        assert_abs_diff_eq!(input.inflate(2).unwrap(), output)
+    }
+
+    #[test]
+    fn test_mcl() {
+        let input: Array2<f64> = array![[1., 1., 1., 0., 0., 0., 0.],
+                                        [1., 1., 1., 0., 0., 0., 0.],
+                                        [1., 1., 1., 1., 0., 0., 0.],
+                                        [0., 0., 1., 1., 1., 0., 1.],
+                                        [0., 0., 0., 1., 1., 1., 1.],
+                                        [0., 0., 0., 0., 1., 1., 1.],
+                                        [0., 0., 0., 1., 1., 1., 1.]];
+        let output: Array2<f64> = array![[0., 0., 0., 0., 0., 0., 0.],
+                                        [0., 0., 0., 0., 0., 0., 0.],
+                                        [1., 1., 1., 0., 0., 0., 0.],
+                                        [0., 0., 0., 0., 0., 0., 0.],
+                                        [0., 0., 0., 0.5, 0.5, 0.5, 0.5],
+                                        [0., 0., 0., 0., 0., 0., 0.],
+                                        [0., 0., 0., 0.5, 0.5, 0.5, 0.5]];
+        assert_abs_diff_eq!(input.mcl(
+            2, 2, 1., 100, 0.001, 1, 1,
+        ).unwrap(), output)
     }
 }
