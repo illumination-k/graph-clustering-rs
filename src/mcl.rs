@@ -85,9 +85,9 @@ where
     ///                                 [1.,   1.]];
     /// let output: Array2<f64> = array![[0.2, 0.2],
     ///                                  [0.8, 0.8]];
-    /// assert_abs_diff_eq!(input.inflate(2).unwrap(), output)
+    /// assert_abs_diff_eq!(input.inflate(2.).unwrap(), output)
     /// ```
-    fn inflate(&self, power: i32) -> Result<Array2<A>>;
+    fn inflate(&self, power: A) -> Result<Array2<A>>;
 
     /// prune the matrix below threshold
     /// The maximum value in each col is not pruned
@@ -116,7 +116,7 @@ where
     /// use ndarray::Array2;
     ///
     /// let expansion = 2;
-    /// let inflation = 2;
+    /// let inflation = 2.;
     /// let loop_value = 1.;
     /// let iterations = 100;
     /// let pruning_threshold = 0.0001;
@@ -141,7 +141,7 @@ where
     ///
     fn mcl(&self,
         expansion: i32,
-        inflation: i32,
+        inflation: A,
         loop_value: A,
         iterations: usize,
         pruning_threshold: A,
@@ -184,8 +184,8 @@ where
         Ok(mat)
     }
 
-    fn inflate(&self, power: i32) -> Result<Array2<A>> {
-        self.mapv(|x| x.powi(power)).normalize()
+    fn inflate(&self, power: A) -> Result<Array2<A>> {
+        self.mapv(|x| x.powf(power)).normalize()
     }
 
     fn add_self_loop(&mut self, loop_value: A) -> Result<()> {
@@ -211,7 +211,7 @@ where
         Ok(pruned)
     }
 
-    fn mcl(&self, expansion: i32, inflation: i32, loop_value: A, iterations: usize, pruning_threshold: A, pruning_frequency: usize, convergence_check_frequency: usize) -> Result<Array2<A>> {
+    fn mcl(&self, expansion: i32, inflation: A, loop_value: A, iterations: usize, pruning_threshold: A, pruning_frequency: usize, convergence_check_frequency: usize) -> Result<Array2<A>> {
         let mut mat: Array2<A> = self.to_owned();
 
         if loop_value > zero() {
@@ -313,7 +313,7 @@ mod test {
                                         [1.,   1.]];
         let output: Array2<f64> = array![[0.2, 0.2],
                                         [0.8, 0.8]];
-        assert_abs_diff_eq!(input.inflate(2).unwrap(), output)
+        assert_abs_diff_eq!(input.inflate(2.).unwrap(), output)
     }
 
     #[test]
@@ -333,7 +333,7 @@ mod test {
                                         [0., 0., 0., 0., 0., 0., 0.],
                                         [0., 0., 0., 0.5, 0.5, 0.5, 0.5]];
         assert_abs_diff_eq!(input.mcl(
-            2, 2, 1., 100, 0.001, 1, 1,
+            2, 2., 1., 100, 0.001, 1, 1,
         ).unwrap(), output)
     }
 }
