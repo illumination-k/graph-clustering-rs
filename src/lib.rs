@@ -6,6 +6,8 @@ The MCL argorithm was developed by Stijn van Dongen at the University of Utrecht
 # Example Usage
 
 ```rust
+# #[macro_use] extern crate ndarray;
+# #[macro_use] extern crate approx;
 use markov_clustering_rs::mcl::*;
 use ndarray::Array2;
 
@@ -34,6 +36,8 @@ let output: Array2<f64> = array![[0., 0., 0., 0., 0., 0., 0.],
                                 [0., 0., 0., 0.5, 0.5, 0.5, 0.5]];
 assert_abs_diff_eq!(input.mcl(expantion, inflation, loop_value, iterations, pruning_threshold, pruning_frequency, convergence_check_frequency).unwrap(), output)
 ```
+
+Please see the [API documentation](https://illumination-k.github.io/markov-clustering-rs/markov_clustering_rs/) for more details.
 */
 
 extern crate anyhow;
