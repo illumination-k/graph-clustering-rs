@@ -170,7 +170,9 @@ where
         }
 
         let shape = (self.shape()[1], self.shape()[0]);
-        let mat: Array2<A> = Array2::from_shape_vec(shape, vec)?.reversed_axes();
+        let mat: Array2<A> = unsafe {
+            Array2::from_shape_vec_unchecked(shape, vec).reversed_axes()
+        };
         Ok(mat)
     }
 
