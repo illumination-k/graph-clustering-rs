@@ -175,6 +175,8 @@ where
     }
 
     fn expand(&self, power: i32) -> Result<Array2<A>> {
+        // TODO! implement numpy.linalg.matrix_power
+        // Use binary decomposition to reduce the number of matrix multiplications        
         let mut mat: Array2<A> = self.to_owned();
 
         for _ in 0..power-1 {
