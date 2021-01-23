@@ -342,6 +342,8 @@
 <span id="339">339</span>
 <span id="340">340</span>
 <span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">iter</span>::<span class="ident">Sum</span>;
 <span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
@@ -515,7 +517,9 @@
         }
 
         <span class="kw">let</span> <span class="ident">shape</span> <span class="op">=</span> (<span class="self">self</span>.<span class="ident">shape</span>()[<span class="number">1</span>], <span class="self">self</span>.<span class="ident">shape</span>()[<span class="number">0</span>]);
-        <span class="kw">let</span> <span class="ident">mat</span>: <span class="ident">Array2</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Array2</span>::<span class="ident">from_shape_vec</span>(<span class="ident">shape</span>, <span class="ident">vec</span>)<span class="question-mark">?</span>.<span class="ident">reversed_axes</span>();
+        <span class="kw">let</span> <span class="ident">mat</span>: <span class="ident">Array2</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw">unsafe</span> {
+            <span class="ident">Array2</span>::<span class="ident">from_shape_vec_unchecked</span>(<span class="ident">shape</span>, <span class="ident">vec</span>).<span class="ident">reversed_axes</span>()
+        };
         <span class="prelude-val">Ok</span>(<span class="ident">mat</span>)
     }
 
