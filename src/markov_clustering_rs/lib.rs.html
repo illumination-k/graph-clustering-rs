@@ -12,7 +12,91 @@
 <span id="9"> 9</span>
 <span id="10">10</span>
 <span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
 </pre><div class="example-wrap"><pre class="rust ">
+<span class="doccomment">/*!
+This crates implements of the MCL algorithm in rust
+
+The MCL argorithm was developed by Stijn van Dongen at the University of Utrecht. Details of the algorithm can be found on the MCL homepage.
+
+# Example Usage
+
+```rust
+# #[macro_use] extern crate ndarray;
+# #[macro_use] extern crate approx;
+use markov_clustering_rs::mcl::*;
+use ndarray::Array2;
+
+// set parameters
+let expantion = 2;
+let inflation = 2.;
+let loop_value = 1.;
+let iterations = 100;
+let pruning_threshold = 0.0001;
+let pruning_frequency = 1;
+let convergence_check_frequency = 1;
+
+let input: Array2&lt;f64&gt; = array![[1., 1., 1., 0., 0., 0., 0.],
+                                [1., 1., 1., 0., 0., 0., 0.],
+                                [1., 1., 1., 1., 0., 0., 0.],
+                                [0., 0., 1., 1., 1., 0., 1.],
+                                [0., 0., 0., 1., 1., 1., 1.],
+                                [0., 0., 0., 0., 1., 1., 1.],
+                                [0., 0., 0., 1., 1., 1., 1.]];
+let output: Array2&lt;f64&gt; = array![[0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0.],
+                                [1., 1., 1., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0.5, 0.5, 0.5, 0.5],
+                                [0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0.5, 0.5, 0.5, 0.5]];
+assert_abs_diff_eq!(input.mcl(expantion, inflation, loop_value, iterations, pruning_threshold, pruning_frequency, convergence_check_frequency).unwrap(), output)
+```
+
+Please see the [API documentation](https://illumination-k.github.io/markov-clustering-rs/markov_clustering_rs/) for more details.
+*/</span>
+
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">anyhow</span>;
 
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">macro_use</span>)]</span>
