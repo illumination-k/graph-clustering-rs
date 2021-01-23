@@ -1,4 +1,4 @@
-# Markov Clustering
+# markov-clustering-rs
 
 This crates implements of the MCL algorithm in rust
 
@@ -12,7 +12,7 @@ use ndarray::Array2;
 
 // set parameters
 let expantion = 2;
-let inflation = 2;
+let inflation = 2.;
 let loop_value = 1.;
 let iterations = 100;
 let pruning_threshold = 0.0001;
