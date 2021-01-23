@@ -1,4 +1,4 @@
-[![Workflow Status](https://github.com/illumination-k/markov-clustering-rs/workflows/rust/badge.svg)](https://github.com/illumination-k/markov-clustering-rs/actions?query=workflow%3A%22rust%22)
+[![Workflow Status](https://github.com/illumination-k/markov-clustering-rs/workflows/Rust/badge.svg)](https://github.com/illumination-k/markov-clustering-rs/actions?query=workflow%3A%22Rust%22)
 
 # markov-clustering-rs
 
