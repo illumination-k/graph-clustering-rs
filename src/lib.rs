@@ -96,7 +96,7 @@ pub fn get_clusters<A: Float>(matrix: &Array2<A>) -> Result<Vec<Vec<usize>>> {
         let v: Vec<usize> = matrix.row(attr)
                                     .iter()
                                     .enumerate()
-                                    .filter(|(_, &x)| x == zero())
+                                    .filter(|(_, &x)| x != zero())
                                     .map(|(i, _)| i)
                                     .collect();
         res_set.insert(v);
