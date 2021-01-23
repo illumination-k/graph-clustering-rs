@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["MclExt",""]]});
+initSidebarItems({"trait":[["MclExt",""],["PartiqlArgMaxExt",""]]});
