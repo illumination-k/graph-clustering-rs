@@ -226,7 +226,7 @@ Please see the [API documentation](https://illumination-k.github.io/markov-clust
         <span class="kw">let</span> <span class="ident">v</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">matrix</span>.<span class="ident">row</span>(<span class="ident">attr</span>)
                                     .<span class="ident">iter</span>()
                                     .<span class="ident">enumerate</span>()
-                                    .<span class="ident">filter</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="kw-2">&amp;</span><span class="ident">x</span>)<span class="op">|</span> <span class="ident">x</span> <span class="op">=</span><span class="op">=</span> <span class="ident">zero</span>())
+                                    .<span class="ident">filter</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="kw-2">&amp;</span><span class="ident">x</span>)<span class="op">|</span> <span class="ident">x</span> <span class="op">!</span><span class="op">=</span> <span class="ident">zero</span>())
                                     .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">i</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">i</span>)
                                     .<span class="ident">collect</span>();
         <span class="ident">res_set</span>.<span class="ident">insert</span>(<span class="ident">v</span>);
