@@ -1,3 +1,5 @@
+[![Workflow Status](https://github.com/illumination-k/markov-clustering-rs/workflows/rust/badge.svg)](https://github.com/illumination-k/markov-clustering-rs/actions?query=workflow%3A%22rust%22)
+
 # markov-clustering-rs
 
 This crates implements of the MCL algorithm in rust
@@ -35,3 +37,7 @@ let output: Array2<f64> = array![[0., 0., 0., 0., 0., 0., 0.],
                                 [0., 0., 0., 0.5, 0.5, 0.5, 0.5]];
 assert_abs_diff_eq!(input.mcl(expantion, inflation, loop_value, iterations, pruning_threshold, pruning_frequency, convergence_check_frequency).unwrap(), output)
 ```
+
+Please see the [API documentation](https://illumination-k.github.io/markov-clustering-rs/markov_clustering_rs/) for more details.
+
+License: MIT
