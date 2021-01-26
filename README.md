@@ -4,6 +4,6 @@
 
 This crates implements of the graph clustering algorithm in rust
 
-Please see the [API documentation](https://illumination-k.github.io/markov-clustering-rs/markov_clustering_rs/) for more details.
+Please see the [API documentation](https://illumination-k.github.io/graph-clustering-rs/graph_clustering_rs/) for more details.
 
 License: MIT
