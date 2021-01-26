@@ -3,14 +3,20 @@ name = "markov-clustering-rs"
 version = "0.1.0"
 authors = ["illumination-k <illumination.k.27@gmail.com>"]
 edition = "2018"
+license = "MIT"
+license-file = "LICENSE"
+repository = "https://github.com/illumination-k/markov-clustering-rs"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anyhow = "1.0"
 ndarray = { version = "0.14.0", features = ["approx"] }
-ndarray-stats = "0.4"
 num-traits = "0.2"
-approx = "*"
+approx = "0.4"
 
 [dev-dependencies]
+
+[badges]
+github = { repository = "illumination-k/markov-clustering-rs", workflow = "Rust" }

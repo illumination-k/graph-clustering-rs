@@ -1,12 +1,40 @@
 use std::iter::Sum;
 use anyhow::Result;
 
-use ndarray::{Array2, Axis};
-use ndarray_stats::*;
+use ndarray::{Array2, ArrayBase, Axis, Data, Dimension};
 
 use approx::{AbsDiffEq};
 
 use num_traits::{Float, zero, one};
+
+pub trait PartiqlArgMaxExt<A, S, D>
+where
+    S: Data<Elem = A>,
+    D: Dimension,
+    A: PartialOrd
+{
+    fn argmax(&self) -> Result<D::Pattern>;
+}
+
+impl<A, S, D> PartiqlArgMaxExt<A, S, D> for ArrayBase<S, D>
+where
+    S: Data<Elem = A>,
+    D: Dimension,
+    A: PartialOrd
+{
+    fn argmax(&self) -> Result<D::Pattern> {
+        let mut current_max = self.first().unwrap();
+        let mut current_pattern_max = D::zeros(self.ndim()).into_pattern();
+        
+        for (pattern, elem) in self.indexed_iter() {
+            if elem.partial_cmp(current_max).unwrap() == std::cmp::Ordering::Greater {
+                current_pattern_max = pattern;
+                current_max = elem;
+            }
+        }
+        Ok(current_pattern_max)
+    }
+}
 
 pub trait MclExt<A>
 where 
@@ -57,9 +85,9 @@ where
     ///                                 [1.,   1.]];
     /// let output: Array2<f64> = array![[0.2, 0.2],
     ///                                  [0.8, 0.8]];
-    /// assert_abs_diff_eq!(input.inflate(2).unwrap(), output)
+    /// assert_abs_diff_eq!(input.inflate(2.).unwrap(), output)
     /// ```
-    fn inflate(&self, power: i32) -> Result<Array2<A>>;
+    fn inflate(&self, power: A) -> Result<Array2<A>>;
 
     /// prune the matrix below threshold
     /// The maximum value in each col is not pruned
@@ -88,10 +116,10 @@ where
     /// use ndarray::Array2;
     ///
     /// let expansion = 2;
-    /// let inflation = 2;
+    /// let inflation = 2.;
     /// let loop_value = 1.;
     /// let iterations = 100;
-    /// let pruning_threshold = 0.1;
+    /// let pruning_threshold = 0.0001;
     /// let pruning_frequency = 1;
     /// let convergence_check_frequency = 1;
     /// let input: Array2<f64> = array![[1., 1., 1., 0., 0., 0., 0.],
@@ -113,7 +141,7 @@ where
     ///
     fn mcl(&self,
         expansion: i32,
-        inflation: i32,
+        inflation: A,
         loop_value: A,
         iterations: usize,
         pruning_threshold: A,
@@ -142,11 +170,15 @@ where
         }
 
         let shape = (self.shape()[1], self.shape()[0]);
-        let mat: Array2<A> = Array2::from_shape_vec(shape, vec)?.reversed_axes();
+        let mat: Array2<A> = unsafe {
+            Array2::from_shape_vec_unchecked(shape, vec).reversed_axes()
+        };
         Ok(mat)
     }
 
     fn expand(&self, power: i32) -> Result<Array2<A>> {
+        // TODO! implement numpy.linalg.matrix_power
+        // Use binary decomposition to reduce the number of matrix multiplications        
         let mut mat: Array2<A> = self.to_owned();
 
         for _ in 0..power-1 {
@@ -156,8 +188,8 @@ where
         Ok(mat)
     }
 
-    fn inflate(&self, power: i32) -> Result<Array2<A>> {
-        self.mapv(|x| x.powi(power)).normalize()
+    fn inflate(&self, power: A) -> Result<Array2<A>> {
+        self.mapv(|x| x.powf(power)).normalize()
     }
 
     fn add_self_loop(&mut self, loop_value: A) -> Result<()> {
@@ -183,7 +215,7 @@ where
         Ok(pruned)
     }
 
-    fn mcl(&self, expansion: i32, inflation: i32, loop_value: A, iterations: usize, pruning_threshold: A, pruning_frequency: usize, convergence_check_frequency: usize) -> Result<Array2<A>> {
+    fn mcl(&self, expansion: i32, inflation: A, loop_value: A, iterations: usize, pruning_threshold: A, pruning_frequency: usize, convergence_check_frequency: usize) -> Result<Array2<A>> {
         let mut mat: Array2<A> = self.to_owned();
 
         if loop_value > zero() {
@@ -285,7 +317,7 @@ mod test {
                                         [1.,   1.]];
         let output: Array2<f64> = array![[0.2, 0.2],
                                         [0.8, 0.8]];
-        assert_abs_diff_eq!(input.inflate(2).unwrap(), output)
+        assert_abs_diff_eq!(input.inflate(2.).unwrap(), output)
     }
 
     #[test]
@@ -305,7 +337,7 @@ mod test {
                                         [0., 0., 0., 0., 0., 0., 0.],
                                         [0., 0., 0., 0.5, 0.5, 0.5, 0.5]];
         assert_abs_diff_eq!(input.mcl(
-            2, 2, 1., 100, 0.001, 1, 1,
+            2, 2., 1., 100, 0.001, 1, 1,
         ).unwrap(), output)
     }
 }
