@@ -6,6 +6,8 @@ The MCL argorithm was developed by Stijn van Dongen at the University of Utrecht
 
 ## Example Usage
 
+If you would like to know further details, please check [documentation](https://illumination-k.github.io/markov-clustering-rs/markov_clustering_rs/).
+
 ```rust
 use markov_clustering_rs::mcl::*;
 use ndarray::Array2;
