@@ -19,4 +19,4 @@ approx = "0.4"
 [dev-dependencies]
 
 [badges]
-github = { repository = "illumination-k/markov-clustering-rs", workflow = "Rust" }
+github = { repository = "illumination-k/graph-clustering-rs", workflow = "Rust" }
