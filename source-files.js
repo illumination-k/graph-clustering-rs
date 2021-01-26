@@ -1,3 +1,3 @@
 var N = null;var sourcesIndex = {};
-sourcesIndex["markov_clustering_rs"] = {"name":"","files":["lib.rs","mcl.rs","utils.rs"]};
+sourcesIndex["graph_clustering_rs"] = {"name":"","dirs":[{"name":"mcl","files":["mod.rs"]}],"files":["lib.rs","utils.rs"]};
 createSourceSidebar();

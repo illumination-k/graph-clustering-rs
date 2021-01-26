@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["mcl","The MCL argorithm was developed by Stijn van Dongen at the University of Utrecht. Details of the algorithm can be found on the MCL homepage."],["utils",""]]});
