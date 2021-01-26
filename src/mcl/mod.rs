@@ -6,7 +6,7 @@ The MCL argorithm was developed by Stijn van Dongen at the University of Utrecht
 ```rust
 # #[macro_use] extern crate ndarray;
 # #[macro_use] extern crate approx;
-use graph-clustering-rs::mcl::*;
+use graph_clustering_rs::mcl::*;
 use ndarray::Array2;
 
 // set parameters
@@ -37,6 +37,7 @@ assert_abs_diff_eq!(input.mcl(expantion, inflation, loop_value, iterations, prun
 */
 
 use std::iter::Sum;
+use std::collections::HashSet;
 use anyhow::Result;
 
 use ndarray::{Array2, ArrayBase, Axis, Data, Dimension};
@@ -83,7 +84,7 @@ where
     /// ```
     /// # #[macro_use] extern crate ndarray;
     /// # #[macro_use] extern crate approx;
-    /// use graph-clustering-rs::mcl::*;
+    /// use graph_clustering_rs::mcl::*;
     /// use ndarray::Array2;
     /// let input: Array2<f64> = array![[1., 1., 0.],
     ///                                 [0., 1., 1.],
@@ -100,7 +101,7 @@ where
     /// ```
     /// # #[macro_use] extern crate ndarray;
     /// # #[macro_use] extern crate approx;
-    /// use graph-clustering-rs::mcl::*;
+    /// use graph_clustering_rs::mcl::*;
     /// use ndarray::Array2;
     /// let input = array![[1., 0.5, 0.],
     ///                 [0., 0.5, 0.5],
@@ -117,7 +118,7 @@ where
     /// ```
     /// # #[macro_use] extern crate ndarray;
     /// # #[macro_use] extern crate approx;
-    /// use graph-clustering-rs::mcl::*;
+    /// use graph_clustering_rs::mcl::*;
     /// use ndarray::Array2;
     /// let input: Array2<f64> = array![[0.5, 0.5],
     ///                                 [1.,   1.]];
@@ -133,7 +134,7 @@ where
     /// ```
     /// # #[macro_use] extern crate ndarray;
     /// # #[macro_use] extern crate approx;
-    /// use graph-clustering-rs::mcl::*;
+    /// use graph_clustering_rs::mcl::*;
     /// use ndarray::Array2;
     /// let threshold = 2.5;
     /// let input: Array2<f64> = array![[1., 2., 3.], [3., 1., 4.]];
@@ -150,7 +151,7 @@ where
     /// ```
     /// # #[macro_use] extern crate ndarray;
     /// # #[macro_use] extern crate approx;
-    /// use graph-clustering-rs::mcl::*;
+    /// use graph_clustering_rs::mcl::*;
     /// use ndarray::Array2;
     ///
     /// let expansion = 2;
@@ -284,6 +285,56 @@ where
     }
 }
 
+/// Retrieve the clusters from the matrix
+///
+/// ```
+/// # #[macro_use] extern crate ndarray;
+/// use graph_clustering_rs::mcl::*;
+/// use ndarray::Array2;
+///
+/// let expansion = 2;
+/// let inflation = 2.;
+/// let loop_value = 1.;
+/// let iterations = 100;
+/// let pruning_threshold = 0.0001;
+/// let pruning_frequency = 1;
+/// let convergence_check_frequency = 1;
+/// let input: Array2<f64> = array![[1., 1., 1., 0., 0., 0., 0.],
+///                                 [1., 1., 1., 0., 0., 0., 0.],
+///                                 [1., 1., 1., 1., 0., 0., 0.],
+///                                 [0., 0., 1., 1., 1., 0., 1.],
+///                                 [0., 0., 0., 1., 1., 1., 1.],
+///                                 [0., 0., 0., 0., 1., 1., 1.],
+///                                 [0., 0., 0., 1., 1., 1., 1.]];
+/// let output = input.mcl(expansion, inflation, loop_value, iterations, pruning_threshold, pruning_frequency, convergence_check_frequency).unwrap();
+/// let target = vec![vec![0, 1, 2], vec![3, 4, 5, 6]];
+/// assert_eq!(get_clusters(&output).unwrap(), target);
+/// ```
+pub fn get_clusters<A: Float>(matrix: &Array2<A>) -> Result<Vec<Vec<usize>>> {
+    let mut res_set: HashSet<Vec<usize>> = HashSet::new();
+
+    let attractors: Vec<usize> = matrix.diag()
+                                                    .iter()
+                                                    .enumerate()
+                                                    .filter(|(_, &x)| x != zero())
+                                                    .map(|(i, _)| i)
+                                                    .collect();
+    for &attr in attractors.iter() {
+        let v: Vec<usize> = matrix.row(attr)
+                                    .iter()
+                                    .enumerate()
+                                    .filter(|(_, &x)| x != zero())
+                                    .map(|(i, _)| i)
+                                    .collect();
+        res_set.insert(v);
+    }
+
+    let mut res: Vec<Vec<usize>> = res_set.into_iter().collect();
+    res.sort();
+    Ok(res)
+}
+
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -377,5 +428,18 @@ mod test {
         assert_abs_diff_eq!(input.mcl(
             2, 2., 1., 100, 0.001, 1, 1,
         ).unwrap(), output)
+    }
+
+    #[test]
+    fn test_get_clusters_1() {
+        let input: Array2<f64> = array![[0., 0., 0., 0., 0., 0., 0.],
+                                        [0., 0., 0., 0., 0., 0., 0.],
+                                        [1., 1., 1., 0., 0., 0., 0.],
+                                        [0., 0., 0., 0., 0., 0., 0.],
+                                        [0., 0., 0., 0.5, 0.5, 0.5, 0.5],
+                                        [0., 0., 0., 0., 0., 0., 0.],
+                                        [0., 0., 0., 0.5, 0.5, 0.5, 0.5]];
+        let target = vec![vec![0, 1, 2], vec![3, 4, 5, 6]];
+        assert_eq!(get_clusters(&input).unwrap(), target)
     }
 }
