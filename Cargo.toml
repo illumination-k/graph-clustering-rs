@@ -15,6 +15,7 @@ anyhow = "1.0"
 ndarray = { version = "0.14.0", features = ["approx"] }
 num-traits = "0.2"
 approx = "0.4"
+petgraph = "0.5"
 
 [dev-dependencies]
 

@@ -6,6 +6,7 @@ Please see the [API documentation](https://illumination-k.github.io/graph-cluste
 ## RoadMap
 
 - [x] Markov Clustering
+- [ ] louvain
 - [ ] HCCA
 - [ ] MCODE
 - [ ] DPClus
@@ -24,5 +25,8 @@ extern crate approx;
 
 extern crate num_traits;
 
+extern crate petgraph;
+
 pub mod mcl;
 pub mod utils;
+pub mod mcode;
